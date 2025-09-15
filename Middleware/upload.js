@@ -1,22 +1,12 @@
-// middlewares/avatarUpload.js
-
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
-// ✅ Cloudinary storage for avatar only
-const avatarStorage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => ({
-    folder: "profilePics",
-    allowed_formats: ["jpg", "jpeg", "png","webp"],
-    public_id: `avatar-${req.user?._id}-${Date.now()}`,
-  }),
-});
+//Allowed formats
+const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-// File filter only for images (avatar)
+//File filter
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png","image/webp"];
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -24,10 +14,19 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-//  Final multer instance
-const avatarUpload = multer({
-  storage: avatarStorage,
-  fileFilter,
-});
+/**
+ *  Dynamic uploader
+ * @param {string} folderName - Cloudinary folder name (e.g. 'profilePics', 'menuItems', 'categories')
+ */
+export const createUploader = (folderName) => {
+  const storage = new CloudinaryStorage({
+    cloudinary,
+    params: async (req, file) => ({
+      folder: folderName,
+      allowed_formats: allowedMimeTypes.map((type) => type.split("/")[1]),
+      public_id: `${folderName}-${Date.now()}`,
+    }),
+  });
 
-export { avatarUpload };
+  return multer({ storage, fileFilter });
+};

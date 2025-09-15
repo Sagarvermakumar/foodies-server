@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../Models/User.js";
+import { config } from "../config/env.js";
+import User from "../Models/User.model.js";
 import catchAsyncError from "./CatchAsyncError.js";
 import ErrorHandler from "./Error.js";
 
@@ -8,28 +9,25 @@ import ErrorHandler from "./Error.js";
  * @use     This middleware checks if the user is logged in by verifying the JWT token
  *          stored in cookies. If the token is valid, it attaches the user information to the request object.
  */
+
 export const isAuthenticate = catchAsyncError(async (req, res, next) => {
   const token = req.cookies?.token;
-  if (!token) return next(new ErrorHandler("You need to login first...", 400));
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  req.user = await User.findById(decoded.id);
 
-  next();
-});
+  if (!token) return next(new ErrorHandler("You need to login first...", 401));
 
-
-
-/**
- * @desc    Middleware to check if the user is an admin
- * @use     This middleware checks if the authenticated user has an admin role.
- *          If the user is not an admin, it throws an error.
- */
-export const isAdmin = catchAsyncError(async (req, res, next) => {
-  const user = await User.findById(req.user.id);
-  if (!user || user.role !== "Admin") {
-    return next(new ErrorHandler("Access denied. Admins only.", 400));
+  let decoded;
+  try {
+    decoded = jwt.verify(token, config.JWT_SECRET); // agar invalid token hoga to catch me jayega
+  } catch (err) {
+    return next(new ErrorHandler("Invalid or expired token. Please login again.", 401));
   }
 
-  // If the user is an admin, allow the request to proceed
+  const user = await User.findById(decoded.id);
+  if (!user) return next(new ErrorHandler("User not found", 404));
+
+  req.user = user;
+
   next();
 });
+
+

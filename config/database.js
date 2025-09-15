@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
+import { config } from "./env.js";
 
 const connectDB = async () => {
   try {
 
-    const connection = await mongoose.connect(process.env.MONGO_URI, {
-      dbName: "foodDelivery-lite",
+    const MONGO_URI = config.NODE_ENV === "production" ? config.MONGO_URI_CLOUD : config.MONGO_URI_LOCAL
+
+    const connection = await mongoose.connect(MONGO_URI, {
+      dbName: "Yumz",
     });
     console.log(`Database connected to ${connection.connection.host}`);
   } catch (error) {

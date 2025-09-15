@@ -1,14 +1,16 @@
 import { faker } from "@faker-js/faker";
-import Address from "../Models/Address.js";
-import MenuItem from "../Models/MenuItem.js";
-import Order from "../Models/Order.js";
-import User from "../Models/User.js";
+import Address from "../Models/Address.model.js";
+import Category from "../models/Category.model.js";
+import { default as Item, default as MenuItem } from "../Models/Item.model.js";
+import Order from "../Models/Order.model.js";
+import Outlet from "../Models/Outlet.model.js";
+import User from "../Models/User.model.js";
 
 const now = new Date();
 const currentMonth = now.getMonth();
 const currentYear = now.getFullYear();
 
-const lastMonth = currentMonth === 0 ? 11 : currentMonth - 2;
+const lastMonth = currentMonth === 0 ? 11 : currentMonth + 4;
 const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
 const fromDate = new Date(lastMonthYear, lastMonth, 1);
@@ -19,24 +21,29 @@ const createdAt = faker.date.between({ from: fromDate, to: toDate });
 
 const getFakeUserData = () => {
   return {
-    avatar:{
-         public_id: faker.image.avatar(),
-        url: faker.image.url({width:"120px",height:"120px"}),
+    avatar: {
+      public_id: faker.image.avatar(),
+      url: faker.image.url({ width: "120px", height: "120px" }),
     },
     name: faker.person.fullName(),
     email: faker.internet.email().toLowerCase(),
     password: "password123", // Will be hashed by pre-save hook
-    phoneNumber: faker.helpers.fromRegExp("+91[6-9][0-9]{9}"),
+    phone: faker.helpers.fromRegExp("+91[6-9][0-9]{9}"),
     referralCode: faker.string.alphanumeric(8),
     referredBy: faker.helpers.maybe(() => faker.string.alphanumeric(8), {
       probability: 0.3,
     }),
     walletBalance: faker.finance.amount(0, 500, 0),
-    role: faker.helpers.arrayElement(["User",  "User"]),
+    role: faker.helpers.arrayElement([
+      "SUPER_ADMIN",
+      "MANAGER",
+      "STAFF",
+      "DELIVERY",
+      "CUSTOMER",
+    ]),
     status: faker.helpers.arrayElement(["active", "blocked"]),
     isVerified: faker.datatype.boolean(),
-    lastLogin: faker.date.recent({ days: 10 }),
-     createdAt,
+    createdAt,
   };
 };
 
@@ -58,21 +65,7 @@ export const saveInDbFakeUsers = async (count = 5) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export const generateRandomOrderData = async (count = 6) => {
+export const generateRandomOrderData = async (count = 8) => {
   const users = await User.find({});
   const menuItems = await MenuItem.find({});
 
@@ -104,7 +97,7 @@ export const generateRandomOrderData = async (count = 6) => {
         quantity: faker.helpers.rangeToNumber({ min: 1, max: 3 }),
       })),
       totalPrice: faker.finance.amount(100, 1000, 2),
-      
+
       referralDiscountApplied: faker.datatype.boolean(),
       paymentMethod: faker.helpers.arrayElement(["COD", "Online"]),
       status: faker.helpers.arrayElement([
@@ -119,8 +112,8 @@ export const generateRandomOrderData = async (count = 6) => {
       walletUsed: 15,
       cancelledAt: faker.date.recent({ days: 1 }),
       deliveredAt: faker.date.future({ days: 1 }),
-      deliveryAddressID: address._id, 
-      createdAt
+      deliveryAddressID: address._id,
+      createdAt,
     });
 
     fakeOrders.push(fakeOrder);
@@ -135,39 +128,36 @@ export const generateRandomOrderData = async (count = 6) => {
   }
 };
 
-
-
-
-
-
-
- export const generateMenuItems = async (count = 5) => {
+export const generateMenuItems = async (count = 5) => {
   try {
-  
-    // await MenuItem.deleteMany(); // Optional: clean slate
-    const categories = ["Appetizer", "Main Course", "Dessert"];
 
- const user = await User.find({}).select('_id')
-      for (let i = 0; i < count; i++) {
-        const menuItem = new MenuItem({
-          createdBy: faker.helpers.arrayElement(user),
-          name: faker.food.dish(),
-          description: faker.food.description(),
-          price: faker.number.float({ min: 50, max: 500, precision: 1 }),
-   
-          image: faker.image.urlLoremFlickr({ category: "food" }),
-          category: faker.helpers.arrayElement(categories),
-          isVegetarian: faker.datatype.boolean(),
-          isVegan: faker.datatype.boolean(),
-          ratings: faker.number.float({ min: 1, max: 5, precision: 0.1 }),
-          reviews: faker.number.int({ min: 0, max: 200 }),
-          isAvailable: faker.datatype.boolean(),
-          createdAt
-        });
+    const category = await Category.find({}).select("_id");
+    const outletID = await Outlet.find({}).select("_id");
+    console.log("category: ", category)
+    console.log("outletID : ", outletID)
+    for (let i = 0; i < count; i++) {
 
-        await menuItem.save();
-        console.log(`🍽️ Menu item added `);
-      
+      const menuItem = new Item({
+        name: faker.food.dish(),
+        category: faker.helpers.arrayElement(category),
+        createdBy: "689d3f5a0e91c6f107fa5279",
+        slug: faker.helpers.slugify(faker.lorem.word()),
+        description: faker.food.description(),
+        image: faker.image.urlLoremFlickr({ category: "food" }),
+        price: faker.number.float({ min: 50, max: 500, precision: 1 }),
+        // variations:[],
+        // addons:[],
+        discount: faker.number.int(100) ,
+        isVegetarian: faker.datatype.boolean(),
+        isAvailable: faker.datatype.boolean(),
+        outlet:faker.helpers.arrayElement(outletID),
+        
+        createdAt,
+      });
+      console.log("ITEMS : ", menuItem)
+
+      await menuItem.save();
+      console.log(`🍽️ Menu item added `);
     }
 
     console.log("✅ Menu items seeded successfully.");
@@ -178,57 +168,76 @@ export const generateRandomOrderData = async (count = 6) => {
   }
 };
 
+const getFakeAddressData = (id, lat, long) => ({
+  user: id,
 
-const getFakeAddressData = (id) => ({
-  
-    user:id,
-  label:"Work",
+  label: faker.helpers.arrayElement(["Home", "Work", "Other"]),
   addressLine: faker.location.streetAddress(),
-  street: faker.location.streetAddress(),
-  city: faker.location.city(),
-  state: faker.location.state(),
-  country: faker.location.country(),
-  pinCode: faker.location.zipCode(),
-  landmark: faker.location.streetAddress(),
-  geo: {
-    latitude: faker.location.latitude(),
-    longitude: faker.location.longitude(),
-  },
+  coordinates: [lat, long],
+  isDefaultAddress: faker.datatype.boolean(),
 });
-// set address of all users 
-export const setRandomGeneratedAddressInEachUser = async ()=>{
+// set address of all users
+export const setRandomGeneratedAddressInEachUser = async () => {
+  const userIds = await User.find({}).select("_id");
+  let lat = faker.location.latitude();
+  let long = faker.location.longitude();
+  for (let i = 0; i < userIds.length; i++) {
+    const address = getFakeAddressData(userIds[i]._id, lat, long);
 
-  const userIds = await User.find({}).select('_id');
-for (let i = 0; i < userIds.length; i++) {
+    await Address.create(address);
 
-  const address = getFakeAddressData(userIds[i]._id);
+    console.log("Address Created");
+  }
+};
 
-  await Address.create(address)
 
 
-  console.log("Address Created")
 
-}
-}
 
 
 
 //clear database
-export const clearDb = async ()=>{
+export const clearDb = async () => {
   await User.deleteMany();
   console.log("user Cleared");
 
-  
   await Address.deleteMany();
   console.log("Address Cleared");
 
-  
   await MenuItem.deleteMany();
   console.log("Menu Cleared");
 
   await Order.deleteMany();
   console.log("Order Cleared");
+};
 
 
-  
-}
+export const createCategorySeed = async (count = 15) => {
+  try {
+    // await MenuItem.deleteMany(); // Optional: clean slate
+
+    for (let i = 0; i < count; i++) {
+
+      const cat = new Category({
+        name: faker.food.dish(),
+        createdBy: "689d3f5a0e91c6f107fa5279",
+        description: faker.food.description(),
+        image:{
+          public_id: faker.helpers.replaceCreditCardSymbols(),
+          url:faker.image.urlLoremFlickr({ category: "food" }),
+        },
+        createdAt,
+      });
+      console.log("ITEMS : ", cat)
+
+      await cat.save();
+      console.log(`Category Added `);
+    }
+
+    console.log("✅ Category seeded successfully.");
+    process.exit(0);
+  } catch (err) {
+    console.error("❌ MenuItem seeding error:", err.message);
+    process.exit(1);
+  }
+};

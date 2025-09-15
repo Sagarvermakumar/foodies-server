@@ -1,42 +1,38 @@
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import { config } from "dotenv";
 import express from "express";
+import helmet from "helmet";
 import { errorMiddleware } from "./Middleware/Error.js";
-import addressRouter from "./Router/Address.js";
-import adminRouter from "./Router/Admin.js";
-import authRouter from "./Router/Auth.js";
-import menuItemRouter from "./Router/MenuItem.js";
-import orderRouter from "./Router/Order.js";
-import userRouter from "./Router/User.js";
+import Order from "./Models/Order.model.js";
+import routes from "./Router/index.js";
 const app = express();
 
-config({
-  path: "./.env",
-});
 const allowedOrigins = [
   "http://localhost:3000",
-"https://zayka-express-six.vercel.app"
+  "http://localhost:5173",
+  "https://zayka-express-six.vercel.app",
 ];
 
 app.use(
   cors({
- origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  }, methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"], // ✅ FIXED as array
   })
-)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb'  }));
+);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-// Middleware
-
+app.use(helmet());
+app.use(compression()); //Benefit: Faster page load, lower bandwidth.
 
 //home route
 app.get("/", (req, res) => {
@@ -46,13 +42,14 @@ app.get("/", (req, res) => {
   });
 });
 
-// Routes
-app.use("/api/v1/auth", authRouter); // Auth routes
-app.use("/api/v1/user", userRouter);
-app.use("/api/v1/address", addressRouter);
-app.use("/api/v1/menu-item", menuItemRouter);
-app.use("/api/v1/order", orderRouter);
-app.use("/api/v1/admin", adminRouter);
+// All Routes
+app.use("/api/v1", routes);
+
+const clear = async () => {
+  await Order.deleteMany();
+  console.log("Orders  Cleared")
+}
+
 
 
 //error middleware

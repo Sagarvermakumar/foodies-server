@@ -4,7 +4,7 @@ import ErrorHandler from '../Middleware/Error.js'
 import Cart from '../Models/Cart.model.js'
 import Order, { ORDER_STATUS } from '../Models/Order.model.js'
 import User from '../Models/User.model.js'
-import { generateInvoicePDF } from '../utils/generateInvoice.js'
+import { generateInvoicePDF } from '../Utils/generateInvoice.js'
 
 /**
  * @desc   Start a new checkout session by generating a unique cartId (UUID).

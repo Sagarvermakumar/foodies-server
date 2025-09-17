@@ -12,6 +12,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://zayka-express-six.vercel.app",
+  "https://zayka-nu.vercel.app"
 ];
 
 app.use(

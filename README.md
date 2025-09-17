@@ -77,5 +77,52 @@ It provides secure admin features, user management, menu management, and order p
 ---
 
 
+## ⚙️ Environment Variables
+
+Before running the server, create a **`.env`** file in the root of the project and add the following variables:
+
+```env
+# Server
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGO_URI_CLOUD=your_mongodb_cloud_uri
+MONGO_URI_LOCAL=your_local_mongodb_uri
+
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+
+# Frontend URL
+FRONTEND_URL=http://localhost:3000
+
+# Cloudinary (for images)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# SMTP (for emails)
+SMTP_PORT=587
+SMTP_HOST=smtp.yourprovider.com
+SMTP_USER=your_email_username
+SMTP_PASS=your_email_password
+
+# Email Settings
+EMAIL_FROM_NAME=Zayka Express
+EMAIL_FROM=no-reply@zaykaexpress.com
+```
+
+
+
+
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
+![Express](https://img.shields.io/badge/Express.js-Backend-lightgrey)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+
+
+
 
 

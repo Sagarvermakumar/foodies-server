@@ -21,14 +21,16 @@ export const getCategories = catchAsyncError(async (req, res, next) => {
   // calculating skip
   const skip = (page - 1) * limit
 
-  // counting total doc
-  const total = await Category.countDocuments()
-
   const categories = await Category.find(filter)
     .sort({ order: 1 })
     .skip(skip)
     .limit(limit)
-  if (!categories) return next(new ErrorHandler('categories not exit', 400))
+
+  console.log(categories)
+  if (categories.length===0) return next(new ErrorHandler('categories not exit', 404))
+
+  // counting total doc
+  const total = await Category.countDocuments()
   res.json({
     success: true,
     message: 'all categories fetched Successfully,',
@@ -50,7 +52,15 @@ export const getCategories = catchAsyncError(async (req, res, next) => {
  * @access MANAGER (own outlet), SUPER_ADMIN
  */
 export const createCategory = catchAsyncError(async (req, res, next) => {
-  const { name, slug, description, availableItems, sortOrder, ratingCount, active } = req.body
+  const {
+    name,
+    slug,
+    description,
+    availableItems,
+    sortOrder,
+    ratingCount,
+    active,
+  } = req.body
   const file = req.file
   if (!file) {
     return next(new ErrorHandler('Please Upload Category Image', 400))
@@ -121,9 +131,9 @@ export const deleteCategory = catchAsyncError(async (req, res, next) => {
   if (!categoryId)
     return next(new ErrorHandler('Category Id Is required to delete Category'))
 
-  const item = await Item.find({ category: categoryId });
+  const item = await Item.find({ category: categoryId })
   console.log(item)
-  if (item.length !==0) {
+  if (item.length !== 0) {
     return next(
       new ErrorHandler(
         "Category can't delete , Item available in this category"
@@ -203,5 +213,3 @@ export const getMenusCategoryById = catchAsyncError(async (req, res, next) => {
     },
   })
 })
-
-

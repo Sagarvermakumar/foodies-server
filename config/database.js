@@ -6,8 +6,8 @@ const connectDB = async () => {
 
     const MONGO_URI = config.NODE_ENV === "production" ? config.MONGO_URI_CLOUD : config.MONGO_URI_LOCAL
 
-    const connection = await mongoose.connect(MONGO_URI, {
-      dbName: "Yumz",
+    const connection = await mongoose.connect(MONGO_URI,{
+      dbName:"Yumz"
     });
     console.log(`Database connected to ${connection.connection.host}`);
   } catch (error) {

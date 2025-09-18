@@ -244,19 +244,32 @@ export const changePassword = catchAsyncError(async (req, res, next) => {
  * @access  Private
  */
 export const logoutUser = catchAsyncError((req, res) => {
+  const role = req.user?.role || "CUSTOMER"; // fallback in case role na mile
+
+  const cookieMap = {
+    SUPER_ADMIN: "super_admin_token",
+    MANAGER: "manager_token",
+    STAFF: "staff_token",
+    DELIVERY: "delivery_token",
+    CUSTOMER: "customer_token",
+  };
+
+  const cookieName = cookieMap[role] || "user_token";
+
   return res
     .status(200)
-    .cookie("token", "", {
+    .cookie(cookieName, "", {
       maxAge: 0,
       httpOnly: true,
-      secure: true, // Set to true if using HTTPS
-      sameSite: "none", // or 'None' if cross-origin
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     })
     .json({
       success: true,
-      message: "Logged Out Successfully",
+      message: `${role} logged out successfully`,
     });
 });
+
 
 /**
  * @desc    Get profile details of the logged-in user

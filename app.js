@@ -17,37 +17,47 @@ const allowedOrigins = [
 ];
 
 
-// 1) Fallback header setter (handles cases where origin is undefined)
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.header("Access-Control-Allow-Origin", origin);
-  } else {
-    res.header("Access-Control-Allow-Origin", "*"); // fallback for curl/postman
-  }
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
+// // 1) Fallback header setter (handles cases where origin is undefined)
+// app.use((req, res, next) => {
+//   const origin = req.headers.origin;
+//   if (origin) {
+//     res.header("Access-Control-Allow-Origin", origin);
+//   } else {
+//     res.header("Access-Control-Allow-Origin", "*"); // fallback for curl/postman
+//   }
+//   res.header("Access-Control-Allow-Credentials", "true");
+//   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   next();
+// });
 
-// 2) cors middleware with strict origins
+// // 2) cors middleware with strict origins
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       console.log("🔍 Incoming request from origin:", origin);
+
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         console.log("✅ Allowed origin:", origin || "No Origin (Postman/curl)");
+//         callback(null, true);
+//       } else {
+//         console.warn("❌ Blocked origin:", origin);
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//     credentials: true,
+//     allowedHeaders: ["Content-Type", "Authorization"], // no need to include ACA-C here
+//   })
+// );
+
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      console.log("🔍 Incoming request from origin:", origin);
-
-      if (!origin || allowedOrigins.includes(origin)) {
-        console.log("✅ Allowed origin:", origin || "No Origin (Postman/curl)");
-        callback(null, true);
-      } else {
-        console.warn("❌ Blocked origin:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"], // no need to include ACA-C here
+    origin: "*", // 👈 temporarily allow all
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true, // still allow cookies
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

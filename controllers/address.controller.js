@@ -8,7 +8,6 @@ export const getLocationByPincode = catchAsyncError(async (req, res, next) => {
   const { pin } = req.params
   const details = await getAddressFromPincode(pin)
 
-  console.log(details)
   if (!details) {
     return res.status(404).json({
       success: false,
@@ -45,7 +44,6 @@ export const createAddress = async (req, res) => {
     state = '',
   } = req.body
 
-  console.log(req.body)
 
   // 1. Check pincode API
 
@@ -129,7 +127,6 @@ export const updateAddress = catchAsyncError(async (req, res, next) => {
   if (!id) {
     return next(new ErrorHandler('Valid id is required'))
   }
-  console.log(id)
   // Allowed fields according to your Address model
   const allowedFields = [
     'label',
@@ -145,7 +142,6 @@ export const updateAddress = catchAsyncError(async (req, res, next) => {
     "contactPhone"
   ]
 
-  console.log(req.body)
 
   // Build update object only with fields present in req.body
   const updateFields = {}

@@ -11,7 +11,6 @@ import Order from "../Models/Order.model.js";
  */
   export const pushNotification = catchAsyncError(async (req, res) => {
       const { title, message, targetUsers ,type} = req.body || {};
-      console.log({title, message, targetUsers ,type})
       const notification = await Notification.create({
         title,
         message,

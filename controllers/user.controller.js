@@ -47,7 +47,6 @@ export const updateProfile = catchAsyncError(async (req, res, next) => {
 
 export const updateProfilePic = catchAsyncError(async (req, res, next) => {
   const file = req.file;
-  console.log("File : ", file)
   if (!file) {
     return next(new ErrorHandler("Please Upload Your Avatar", 400));
   }
@@ -204,7 +203,6 @@ export const getAllCustomers = catchAsyncError(async (req, res, next) => {
 // Delete user profile
 export const deleteProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.params._id);
-  console.log("req.params._id : ", req.params._id)
 
   if (!user) {
     return next(new ErrorHandler("User not found", 404));

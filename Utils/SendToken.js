@@ -1,6 +1,5 @@
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken()
-console.log("token : ", token)
   const isProduction = process.env.NODE_ENV === 'production'
   res
     .status(statusCode)

@@ -26,7 +26,6 @@ export const getCategories = catchAsyncError(async (req, res, next) => {
     .skip(skip)
     .limit(limit)
 
-  console.log(categories)
   if (categories.length===0) return next(new ErrorHandler('categories not exit', 404))
 
   // counting total doc
@@ -127,12 +126,10 @@ export const updateCategory = catchAsyncError(async (req, res) => {
  */
 export const deleteCategory = catchAsyncError(async (req, res, next) => {
   const categoryId = req.params.id
-  console.log(categoryId)
   if (!categoryId)
     return next(new ErrorHandler('Category Id Is required to delete Category'))
 
   const item = await Item.find({ category: categoryId })
-  console.log(item)
   if (item.length !== 0) {
     return next(
       new ErrorHandler(

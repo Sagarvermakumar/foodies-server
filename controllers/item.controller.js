@@ -86,7 +86,6 @@ export const createItem = catchAsyncError(async (req, res, next) => {
 export const getAllItems = catchAsyncError(async (req, res, next) => {
   let { query, page, limit } = req.query
 
-  console.log(query)
   page = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1
   limit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10
 
@@ -100,7 +99,6 @@ export const getAllItems = catchAsyncError(async (req, res, next) => {
 
   // Pagination calculation
   const skip = (page - 1) * limit
-  // console.log(filters);
   // Query with filters, skip, and limit
   const items = await Item.find(filters)
     .skip(skip)
@@ -213,8 +211,6 @@ export const updateItem = catchAsyncError(async (req, res, next) => {
   if (!itemId) {
     return next(new ErrorHandler('Invalid item ID', 400))
   }
-  console.log("body",req.body)
-  console.log("file",req.file)
   let item = await Item.findById(itemId)
   if (!item) return next(new ErrorHandler('Item not found', 404))
 
@@ -244,11 +240,10 @@ export const updateItem = catchAsyncError(async (req, res, next) => {
       const publicId = getPublicIdFromUrl(item.image)
       await cloudinary.uploader.destroy(publicId)
     }
-    // 2. Upload new image
+    //  Upload new image
     const uploadResult = await cloudinary.uploader.upload(req.file.path, {
       folder: 'menuItems',
     })
-    console.log(uploadResult)
     // 3. Set new image data in req.body
     req.body.image = uploadResult.secure_url
   }

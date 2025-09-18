@@ -17,6 +17,21 @@ const allowedOrigins = [
 ];
 
 
+// 1) Fallback header setter (handles cases where origin is undefined)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    res.header("Access-Control-Allow-Origin", "*"); // fallback for curl/postman
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+// 2) cors middleware with strict origins
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -32,10 +47,10 @@ app.use(
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization","Access-Control-Allow-Credentials"], // ✅ FIXED as array
-
+    allowedHeaders: ["Content-Type", "Authorization"], // no need to include ACA-C here
   })
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 

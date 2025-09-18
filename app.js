@@ -8,6 +8,9 @@ import routes from "./Router/index.js";
 
 const app = express();
 
+
+app.set('trust proxy', 1);
+
 // ✅ Allowed Origins
 const allowedOrigins = [
   "http://localhost:3000",
@@ -61,6 +64,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use(helmet());
 app.use(compression()); // Faster response, less bandwidth
+
+
 
 // Home route
 app.get("/", (req, res) => {

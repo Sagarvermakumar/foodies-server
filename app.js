@@ -12,22 +12,10 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://zayka-nu.vercel.app/"
+  "https://zayka-nu.vercel.app",
+  "https://zayka-admin-kappa.vercel.app"
 ];
 
-
-
-app.options("*", cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true,
-}));
 
 app.use(
   cors({
@@ -44,7 +32,8 @@ app.use(
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ FIXED as array
+    allowedHeaders: ["Content-Type", "Authorization","Access-Control-Allow-Credentials"], // ✅ FIXED as array
+
   })
 );
 app.use(express.json({ limit: "10mb" }));

@@ -6,20 +6,34 @@ import ErrorHandler from "./Error.js";
 
 /**
  * @desc    Middleware to check if the user is authenticated
- * @use     This middleware checks if the user is logged in by verifying the JWT token
- *          stored in cookies. If the token is valid, it attaches the user information to the request object.
+ * @use     Checks role-based cookies and verifies JWT. Attaches user to req.user
  */
-
 export const isAuthenticate = catchAsyncError(async (req, res, next) => {
-  const token = req.cookies?.token;
+  // Map of role -> cookie name
+  const roleCookieMap = {
+    SUPER_ADMIN: "super_admin_token",
+    MANAGER: "manager_token",
+    STAFF: "staff_token",
+    DELIVERY: "delivery_token",
+    CUSTOMER: "customer_token",
+  };
 
-  if (!token) return next(new ErrorHandler("You need to login first...", 401));
+  // Pick the first valid token from available role cookies
+  const token = Object.values(roleCookieMap)
+    .map((name) => req.cookies[name])
+    .find(Boolean); // first non-null token
+
+  if (!token) {
+    return next(new ErrorHandler("You need to login first...", 401));
+  }
 
   let decoded;
   try {
-    decoded = jwt.verify(token, config.JWT_SECRET); // agar invalid token hoga to catch me jayega
+    decoded = jwt.verify(token, config.JWT_SECRET);
   } catch (err) {
-    return next(new ErrorHandler("Invalid or expired token. Please login again.", 401));
+    return next(
+      new ErrorHandler("Invalid or expired token. Please login again.", 401)
+    );
   }
 
   const user = await User.findById(decoded.id);
@@ -29,5 +43,3 @@ export const isAuthenticate = catchAsyncError(async (req, res, next) => {
 
   next();
 });
-
-

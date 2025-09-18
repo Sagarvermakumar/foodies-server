@@ -1,9 +1,21 @@
 export const sendToken = (res, user, message, statusCode = 200) => {
-  const token = user.getJWTToken()
-  const isProduction = process.env.NODE_ENV === 'production'
+  const token = user.getJWTToken();
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Role-based cookie name
+  const roleCookieMap = {
+    SUPER_ADMIN: 'super_admin_token',
+    MANAGER: 'manager_token',
+    STAFF: 'staff_token',
+    DELIVERY: 'delivery_token',
+    CUSTOMER: 'customer_token',
+  };
+
+  const cookieName = roleCookieMap[user.role] || 'user_token';
+
   res
     .status(statusCode)
-    .cookie('token', token, {
+    .cookie(cookieName, token, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'None' : 'lax',
@@ -13,5 +25,5 @@ export const sendToken = (res, user, message, statusCode = 200) => {
       success: true,
       message,
       user,
-    })
-}
+    });
+};

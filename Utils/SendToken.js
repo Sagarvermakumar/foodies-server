@@ -1,4 +1,4 @@
-import { config } from "../config/env";
+import { config } from "../config/env.js";
 
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();

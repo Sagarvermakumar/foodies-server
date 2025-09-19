@@ -1,8 +1,8 @@
 // utils/sendResetLink.js
+import crypto from "crypto";
 import { config } from "../config/env.js";
 import ResetToken from "../Models/PasswordToken.model.js";
 import sendEmail from "./sendEmail.js";
-import crypto from "crypto";
 
 export async function sendResetLink(email, subject, expiryMinutes) {
   // Unique token generate
@@ -20,7 +20,7 @@ export async function sendResetLink(email, subject, expiryMinutes) {
   });
 
   // Password reset link
-  const resetUrl = `${config.FRONTEND_URL}/reset-password?token=${token}`;
+  const resetUrl = `${config.CLIENT_URL}/reset-password?token=${token}`;
 
   // Email send karo
   await sendEmail(

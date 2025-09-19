@@ -9,7 +9,6 @@ import ErrorHandler from "./Error.js";
  * @use     Checks role-based cookies and verifies JWT. Attaches user to req.user
  */
 export const isAuthenticate = catchAsyncError(async (req, res, next) => {
-  // Map of role -> cookie name
   const roleCookieMap = {
     SUPER_ADMIN: "super_admin_token",
     MANAGER: "manager_token",
@@ -18,15 +17,21 @@ export const isAuthenticate = catchAsyncError(async (req, res, next) => {
     CUSTOMER: "customer_token",
   };
 
-  // Pick the first valid token from available role cookies
-  const token = Object.values(roleCookieMap)
-    .map((name) => req.cookies[name])
-    .find(Boolean); // first non-null token
+  // Get token from whichever role cookie exists
+  let token, role;
+  for (const [roleKey, cookieName] of Object.entries(roleCookieMap)) {
+    if (req.cookies[cookieName]) {
+      token = req.cookies[cookieName];
+      role = roleKey;
+      break;
+    }
+  }
 
   if (!token) {
     return next(new ErrorHandler("You need to login first...", 401));
   }
 
+  //Verify JWT
   let decoded;
   try {
     decoded = jwt.verify(token, config.JWT_SECRET);
@@ -36,10 +41,18 @@ export const isAuthenticate = catchAsyncError(async (req, res, next) => {
     );
   }
 
+  // Find user
   const user = await User.findById(decoded.id);
   if (!user) return next(new ErrorHandler("User not found", 404));
 
-  req.user = user;
+  // Ensure role from cookie matches user role
+  if (user.role !== role) {
+    return next(
+      new ErrorHandler("Role mismatch. Please login again.", 401)
+    );
+  }
 
+  req.user = user;
   next();
 });
+

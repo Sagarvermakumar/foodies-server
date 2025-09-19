@@ -11,7 +11,7 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-// ✅ Allowed Origins
+//Allowed Origins
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",

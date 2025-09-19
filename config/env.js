@@ -1,13 +1,14 @@
-import dotenv from "dotenv";
-import path from "path";
+import dotenv from 'dotenv'
+import path from 'path'
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') })
 
 export const config = {
   PORT: process.env.PORT || 5000,
   MONGO_URI_CLOUD: process.env.MONGO_URI_CLOUD,
   MONGO_URI_LOCAL: process.env.MONGO_URI_LOCAL,
-  FRONTEND_URL: process.env.FRONTEND_URL,
+  CLIENT_URL: process.env.CLIENT_URL,
+  ADMIN_URL: process.env.ADMIN_URL,
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_EXPIRE: process.env.JWT_EXPIRE,
   NODE_ENV: process.env.NODE_ENV,
@@ -22,4 +23,4 @@ export const config = {
   },
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
   EMAIL_FROM: process.env.EMAIL_FROM,
-};
+}

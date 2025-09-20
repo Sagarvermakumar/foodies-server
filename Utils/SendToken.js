@@ -1,23 +1,8 @@
-import { URL } from "url";
-import { config } from "../config/env.js";
-
-
-
-function extractDomain(fullUrl) {
-  try {
-    const { hostname } = new URL(fullUrl);
-    return hostname; 
-  } catch {
-    return fullUrl;
-  }
-}
-
-
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();
   const isProduction = process.env.NODE_ENV === 'production';
 
- const roleCookieMap = {
+  const roleCookieMap = {
     SUPER_ADMIN: { name: "super_admin_token", domain: extractDomain(config.ADMIN_URL) },
     MANAGER: { name: "manager_token", domain: extractDomain(config.ADMIN_URL) },
     STAFF: { name: "staff_token", domain: extractDomain(config.ADMIN_URL) },
@@ -30,17 +15,20 @@ export const sendToken = (res, user, message, statusCode = 200) => {
     domain: ".myapp.com",
   };
 
-  const cookieName = roleCookieMap[user.role] || 'user_token';
-console.log({cookieName})
+  console.log({isProduction})
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'None' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  if (isProduction) cookieOptions.domain = domain; 
+
   res
     .status(statusCode)
-    .cookie(name, token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'None' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      domain
-    })
+    .cookie(name, token, cookieOptions)
     .json({
       success: true,
       message,

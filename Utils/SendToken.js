@@ -1,3 +1,14 @@
+import { config } from "../config/env.js";
+
+function extractDomain(fullUrl) {
+  try {
+    const { hostname } = new URL(fullUrl);
+    return hostname; // "zayka-admin-kappa.vercel.app"
+  } catch {
+    return fullUrl;
+  }
+}
+
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();
   const isProduction = process.env.NODE_ENV === 'production';

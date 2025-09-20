@@ -1,14 +1,14 @@
-` `;
-import crypto from "crypto";
-import catchAsyncError from "../Middleware/CatchAsyncError.js";
-import ErrorHandler from "../Middleware/Error.js";
-import Address from "../Models/Address.model.js";
-import OTP from "../Models/OTP.model.js";
-import ResetToken from "../Models/PasswordToken.model.js";
-import User from "../Models/User.model.js";
-import { sendToken } from "../Utils/SendToken.js";
-import { sendOtp } from "../Utils/sendOtp.js";
-import { sendResetLink } from "../Utils/sendResetLink.js";
+import crypto from 'crypto'
+import catchAsyncError from '../Middleware/CatchAsyncError.js'
+import ErrorHandler from '../Middleware/Error.js'
+import Address from '../Models/Address.model.js'
+import OTP from '../Models/OTP.model.js'
+import ResetToken from '../Models/PasswordToken.model.js'
+import User from '../Models/User.model.js'
+import { sendToken } from '../Utils/SendToken.js'
+import { extractDomain } from '../Utils/extractDomain.js'
+import { sendOtp } from '../Utils/sendOtp.js'
+import { sendResetLink } from '../Utils/sendResetLink.js'
 
 /**
  * @desc    Register a new user
@@ -16,18 +16,18 @@ import { sendResetLink } from "../Utils/sendResetLink.js";
  * @access  Public
  */
 export const createUser = catchAsyncError(async (req, res, next) => {
-  const { name, email, password, phone, referredBy } = req.body || {};
+  const { name, email, password, phone, referredBy } = req.body || {}
 
-  let userExists = await User.findOne({ email }).select("+password");
+  let userExists = await User.findOne({ email }).select('+password')
 
-  if (userExists) return next(new ErrorHandler("User Already Exist", 400));
+  if (userExists) return next(new ErrorHandler('User Already Exist', 400))
 
   // Generate unique referralCode for this user (e.g. first 6 hex chars)
-  let referralCode = crypto.randomBytes(3).toString("hex").toUpperCase();
+  let referralCode = crypto.randomBytes(3).toString('hex').toUpperCase()
 
   // Make sure referral code is unique (very rare collision)
   while (await User.findOne({ referralCode })) {
-    referralCode = crypto.randomBytes(3).toString("hex").toUpperCase();
+    referralCode = crypto.randomBytes(3).toString('hex').toUpperCase()
   }
 
   const newUserData = {
@@ -38,25 +38,25 @@ export const createUser = catchAsyncError(async (req, res, next) => {
     referralCode,
     referredBy: referredBy || null,
     walletBalance: 0,
-  };
+  }
 
   // If referredBy code is valid, give wallet reward to referrer
   if (referredBy) {
-    const referrer = await User.findOne({ referralCode: referredBy });
+    const referrer = await User.findOne({ referralCode: referredBy })
     if (referrer) {
-      referrer.walletBalance += 50; // reward to referrer
-      await referrer.save();
+      referrer.walletBalance += 50 // reward to referrer
+      await referrer.save()
 
-      newUserData.walletBalance = 25; // reward to new user
+      newUserData.walletBalance = 25 // reward to new user
     } else {
-      return next(new ErrorHandler("Invalid Referral Code", 400));
+      return next(new ErrorHandler('Invalid Referral Code', 400))
     }
   }
 
-  const user = await User.create(newUserData);
+  const user = await User.create(newUserData)
 
-  sendToken(res, user, "Registered Successfully", 201);
-});
+  sendToken(res, user, 'Registered Successfully', 201)
+})
 
 /**
  * @desc    Log in an existing user
@@ -64,21 +64,21 @@ export const createUser = catchAsyncError(async (req, res, next) => {
  * @access  Public
  */
 export const loginUser = catchAsyncError(async (req, res, next) => {
-  const { emailOrPhone, password } = req.body;
+  const { emailOrPhone, password } = req.body
 
   const user = await User.findOne({
     $or: [{ email: emailOrPhone.toLowerCase() }, { phone: emailOrPhone }],
-  }).select("+password");
-  if (!user) return next(new ErrorHandler("Invalid credentials", 404));
+  }).select('+password')
+  if (!user) return next(new ErrorHandler('Invalid credentials', 404))
 
-  const isMatchPassword = await user.matchPassword(password);
+  const isMatchPassword = await user.matchPassword(password)
 
   if (!isMatchPassword) {
-    return next(new ErrorHandler("Invalid credentials", 404));
+    return next(new ErrorHandler('Invalid credentials', 404))
   }
 
-  sendToken(res, user, "Login Successful", 200);
-});
+  sendToken(res, user, 'Login Successful', 200)
+})
 
 /**
  * @route POST /api/v1/auth/email/otp-login
@@ -87,25 +87,24 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
  */
 
 export const emailOtpLogin = catchAsyncError(async (req, res, next) => {
-  const { emailOrPhone } = req.body;
+  const { emailOrPhone } = req.body
 
   if (!emailOrPhone) {
-    return next(new ErrorHandler("Email or phone is required", 400));
+    return next(new ErrorHandler('Email or phone is required', 400))
   }
 
   // Try to find user by email first, then by phone
   const user =
     (await User.findOne({ email: emailOrPhone })) ||
-    (await User.findOne({ phone: emailOrPhone }));
+    (await User.findOne({ phone: emailOrPhone }))
 
-  if (!user) return next(new ErrorHandler("Invalid Email Or Phone", 404));
+  if (!user) return next(new ErrorHandler('Invalid Email Or Phone', 404))
 
   // Send OTP to user's registered email
-  await sendOtp(user.email, "Your Login OTP Code", 5); // 5 minutes expiry
+  await sendOtp(user.email, 'Your Login OTP Code', 5) // 5 minutes expiry
 
-  res.json({ success: true, message: `OTP sent to ${user.email}` });
-});
-
+  res.json({ success: true, message: `OTP sent to ${user.email}` })
+})
 
 /**
  * @route POST /api/v1/auth/reset/password
@@ -114,60 +113,65 @@ export const emailOtpLogin = catchAsyncError(async (req, res, next) => {
  */
 
 export const forgotPassword = catchAsyncError(async (req, res, next) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return next(new ErrorHandler("Invalid Email", 404));
+  const { email } = req.body
+  const user = await User.findOne({ email })
+  if (!user) return next(new ErrorHandler('Invalid Email', 404))
 
-  await sendResetLink(email, "Reset password Link", 10);
+  await sendResetLink(email, 'Reset password Link', 10)
 
-  res.json({ success: true, message: "Reset Password token send successfully in your email." });
-});
+  res.json({
+    success: true,
+    message: 'Reset Password token send successfully in your email.',
+  })
+})
 
 /**
  * @route POST /api/v1/auth/token-verification
  * @desc Verify password reset token from email link
  * @access PUBLIC
  */
-export const  resetPassword= catchAsyncError(async(req, res,next) => {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-      return next(new ErrorHandler("Token and new password are required",400))
-    }
+export const resetPassword = catchAsyncError(async (req, res, next) => {
+  const { token, newPassword } = req.body
+  if (!token || !newPassword) {
+    return next(new ErrorHandler('Token and new password are required', 400))
+  }
 
-    // find token in db
-    const resetToken = await ResetToken.findOne({ token, purpose: "password-reset" });
+  // find token in db
+  const resetToken = await ResetToken.findOne({
+    token,
+    purpose: 'password-reset',
+  })
 
-    if (!resetToken) {
-      return next(new ErrorHandler("Invalid or expired token",400))
-    }
+  if (!resetToken) {
+    return next(new ErrorHandler('Invalid or expired token', 400))
+  }
 
-    // check token expiry
-    if (resetToken.expiresAt < new Date()) {
-      return next(new ErrorHandler("Token has expired",400))
-    }
+  // check token expiry
+  if (resetToken.expiresAt < new Date()) {
+    return next(new ErrorHandler('Token has expired', 400))
+  }
 
-    // check is already used
-    if (resetToken.used) {
-      return next(new ErrorHandler("Token already used" ,400))
-      }
+  // check is already used
+  if (resetToken.used) {
+    return next(new ErrorHandler('Token already used', 400))
+  }
 
-    // 4. User find karo
-    const user = await User.findOne({ email: resetToken.identifier });
-    if (!user) {
-      return next(new(ErrorHandler("User not found",400)))
-    }
+  // 4. User find karo
+  const user = await User.findOne({ email: resetToken.identifier })
+  if (!user) {
+    return next(new (ErrorHandler('User not found', 400))())
+  }
 
-    // 5. Password hash and update
-    user.password = newPassword
-    await user.save();
+  // 5. Password hash and update
+  user.password = newPassword
+  await user.save()
 
-    // 6. Token mark as used
-    resetToken.used = true;
-    await resetToken.save();
+  // 6. Token mark as used
+  resetToken.used = true
+  await resetToken.save()
 
-    return res.json({ success: true, message: "Password reset successful" });
+  return res.json({ success: true, message: 'Password reset successful' })
 })
-
 
 /**
  * @route POST /api/v1/auth/otp-verification
@@ -175,28 +179,28 @@ export const  resetPassword= catchAsyncError(async(req, res,next) => {
  * @access PUBLIC
  */
 export const verifyOTP = catchAsyncError(async (req, res, next) => {
-  const { email, otp } = req.body;
+  const { email, otp } = req.body
 
   const otpDoc = await OTP.findOne({
-    identifier:email,
+    identifier: email,
     otp,
     isUsed: false,
-    expiresAt: { $gt: new Date() }
+    expiresAt: { $gt: new Date() },
   })
 
   if (!otpDoc) {
-    return next(new ErrorHandler( "Invalid or expired OTP",400))
+    return next(new ErrorHandler('Invalid or expired OTP', 400))
   }
 
-  otpDoc.used = true;
-  await otpDoc.save();
+  otpDoc.used = true
+  await otpDoc.save()
 
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({ email, name: "New User", password: "temp" });
-    }
+  let user = await User.findOne({ email })
+  if (!user) {
+    user = await User.create({ email, name: 'New User', password: 'temp' })
+  }
 
-    sendToken(res,user,"OTP verified successfully")
+  sendToken(res, user, 'OTP verified successfully')
 })
 /**
  * @desc    Change password for the logged-in user
@@ -204,39 +208,39 @@ export const verifyOTP = catchAsyncError(async (req, res, next) => {
  * @access  Private
  */
 export const changePassword = catchAsyncError(async (req, res, next) => {
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body
 
   if (currentPassword === newPassword) {
     return next(
       new ErrorHandler(
-        "New password cannot be the same as current password",
+        'New password cannot be the same as current password',
         400
       )
-    );
+    )
   }
 
-  const user = await User.findById(req.user._id).select("+password"); // Ensure password field is selected
+  const user = await User.findById(req.user._id).select('+password') // Ensure password field is selected
 
   if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+    return next(new ErrorHandler('User not found', 404))
   }
 
   // Compare current password with stored password
-  const isMatch = await user.matchPassword(currentPassword); // Ensure comparePassword is defined in your model
+  const isMatch = await user.matchPassword(currentPassword) // Ensure comparePassword is defined in your model
 
   if (!isMatch) {
-    return next(new ErrorHandler("Incorrect current password", 401));
+    return next(new ErrorHandler('Incorrect current password', 401))
   }
 
   // Update password
-  user.password = newPassword;
-  await user.save();
+  user.password = newPassword
+  await user.save()
 
   res.status(200).json({
     success: true,
-    message: "Password changed successfully",
-  });
-});
+    message: 'Password changed successfully',
+  })
+})
 
 /**
  * @desc    Log out the currently logged-in user
@@ -244,67 +248,82 @@ export const changePassword = catchAsyncError(async (req, res, next) => {
  * @access  Private
  */
 export const logoutUser = catchAsyncError((req, res) => {
-  const role = req.user?.role || "CUSTOMER"; // fallback in case role na mile
+  const role = req.user?.role || 'CUSTOMER' // fallback
+  const isProduction = process.env.NODE_ENV === 'production'
 
-  const cookieMap = {
-    SUPER_ADMIN: "super_admin_token",
-    MANAGER: "manager_token",
-    STAFF: "staff_token",
-    DELIVERY: "delivery_token",
-    CUSTOMER: "customer_token",
-  };
+  const roleCookieMap = {
+    SUPER_ADMIN: {
+      name: 'super_admin_token',
+      domain: extractDomain(config.ADMIN_URL),
+    },
+    MANAGER: { name: 'manager_token', domain: extractDomain(config.ADMIN_URL) },
+    STAFF: { name: 'staff_token', domain: extractDomain(config.ADMIN_URL) },
+    DELIVERY: {
+      name: 'delivery_token',
+      domain: extractDomain(config.ADMIN_URL),
+    },
+    CUSTOMER: {
+      name: 'customer_token',
+      domain: extractDomain(config.CLIENT_URL),
+    },
+  }
 
-  const cookieName = cookieMap[role] || "user_token";
+  // get cookie name + domain for this role
+  const { name: cookieName, domain } = roleCookieMap[role] || {
+    name: 'user_token',
+    domain: '.myapp.com',
+  }
 
-  return res
-    .status(200)
-    .cookie(cookieName, "", {
-      maxAge: 0,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    })
-    .json({
-      success: true,
-      message: `${role} logged out successfully`,
-    });
-});
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'None' : 'Lax',
+    expires: new Date(0), // immediately expire
+  }
 
+  if (isProduction) cookieOptions.domain = domain
+  console.log({ isProduction, cookieOptions })
+
+  return res.status(200).cookie(cookieName, '', cookieOptions).json({
+    success: true,
+    message: `logged out successfully`,
+  })
+})
 
 /**
  * @desc    Get profile details of the logged-in user
  * @route   GET /api/v1/user/me
  * @access  Private
  */
-export const getMyProfile = async(req, res) => {
-  const user = req.user;
-  const address = await Address.find({ user });
-const data = {
+export const getMyProfile = async (req, res) => {
+  const user = req.user
+  const address = await Address.find({ user })
+  const data = {
     ...user.toObject(),
     address: address || [],
-  };
+  }
   res.status(200).json({
     success: true,
-    message: "Profile fetched",
+    message: 'Profile fetched',
     user: data,
-  });
-};
+  })
+}
 
-
-export const updateUserRole = catchAsyncError(async (req,res,next)=>{
-  const {userID} = req.params;
-  const {role} = req.body;
+export const updateUserRole = catchAsyncError(async (req, res, next) => {
+  const { userID } = req.params
+  const { role } = req.body
 
   if (!role) {
-    return next(new ErrorHandler("Role is Required to updated role",404));
+    return next(new ErrorHandler('Role is Required to updated role', 404))
   }
-  if(!['SUPER_ADMIN','MANAGER','STAFF','DELIVERY','CUSTOMER'].includes(role)){
+  if (
+    !['SUPER_ADMIN', 'MANAGER', 'STAFF', 'DELIVERY', 'CUSTOMER'].includes(role)
+  ) {
     return next(new ErrorHandler(`'${role}' provided role is not a valid role`))
   }
-  const user = await User.findById(userID);
+  const user = await User.findById(userID)
 
-  if(!user) return next(new ErrorHandler("Invalid User ID",404));
+  if (!user) return next(new ErrorHandler('Invalid User ID', 404))
 
-  user.role= role;
-
+  user.role = role
 })

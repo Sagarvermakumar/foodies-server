@@ -1,13 +1,7 @@
-import { config } from "../config/env.js";
 
-function extractDomain(fullUrl) {
-  try {
-    const { hostname } = new URL(fullUrl);
-    return hostname; // "zayka-admin-kappa.vercel.app"
-  } catch {
-    return fullUrl;
-  }
-}
+import { config } from "../config/env.js";
+import { extractDomain } from "./extractDomain.js";
+
 
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();
@@ -31,11 +25,14 @@ export const sendToken = (res, user, message, statusCode = 200) => {
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'None' : 'lax',
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
   if (isProduction) cookieOptions.domain = domain; 
+
+
+  console.log({isProduction, cookieOptions, token})
 
   res
     .status(statusCode)

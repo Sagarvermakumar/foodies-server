@@ -1,15 +1,28 @@
+import { URL } from "url";
 import { config } from "../config/env.js";
+
+
+
+function extractDomain(fullUrl) {
+  try {
+    const { hostname } = new URL(fullUrl);
+    return hostname; 
+  } catch {
+    return fullUrl;
+  }
+}
+
 
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();
   const isProduction = process.env.NODE_ENV === 'production';
 
  const roleCookieMap = {
-    SUPER_ADMIN: { name: "super_admin_token", domain: config.ADMIN_URL },
-    MANAGER: { name: "manager_token", domain: config.ADMIN_URL },
-    STAFF: { name: "staff_token", domain: config.ADMIN_URL },
-    DELIVERY: { name: "delivery_token", domain: config.ADMIN_URL },
-    CUSTOMER: { name: "customer_token", domain: config.CLIENT_URL },
+    SUPER_ADMIN: { name: "super_admin_token", domain: extractDomain(config.ADMIN_URL) },
+    MANAGER: { name: "manager_token", domain: extractDomain(config.ADMIN_URL) },
+    STAFF: { name: "staff_token", domain: extractDomain(config.ADMIN_URL) },
+    DELIVERY: { name: "delivery_token", domain: extractDomain(config.ADMIN_URL) },
+    CUSTOMER: { name: "customer_token", domain: extractDomain(config.CLIENT_URL) },
   };
 
   const { name, domain } = roleCookieMap[user.role] || {

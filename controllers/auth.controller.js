@@ -281,7 +281,7 @@ export const logoutUser = catchAsyncError((req, res) => {
     expires: new Date(0), // immediately expire
   }
 
-  if (isProduction) cookieOptions.domain = domain
+  // if (isProduction) cookieOptions.domain = domain
   console.log({ isProduction, cookieOptions })
 
   return res.status(200).cookie(cookieName, '', cookieOptions).json({

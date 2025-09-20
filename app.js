@@ -15,8 +15,8 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://zayka-nu.vercel.app",
-  "https://zayka-admin-kappa.vercel.app"
+  "https://zayka-nu.vercel.app/",
+  "https://zayka-admin-kappa.vercel.app/"
 ];
 
 

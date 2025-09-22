@@ -274,6 +274,7 @@ export const logoutUser = catchAsyncError((req, res) => {
 
   // Only set domain if it was used when creating cookie
   if (isProduction && domain) cookieOptions.domain = domain;
+  if (isProduction && domain) cookieOptions.path = '/';
 
   return res
     .status(200)

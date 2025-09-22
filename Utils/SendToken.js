@@ -29,7 +29,8 @@ export const sendToken = (res, user, message, statusCode = 200) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
-  // if (isProduction) cookieOptions.domain = domain; 
+  if (isProduction) cookieOptions.domain = domain; 
+  if (isProduction) cookieOptions.path = "/"; 
 
 
   console.log({isProduction, cookieOptions, token})

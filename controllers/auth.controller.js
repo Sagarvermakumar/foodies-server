@@ -9,6 +9,7 @@ import { sendToken } from '../Utils/SendToken.js'
 import { extractDomain } from '../Utils/extractDomain.js'
 import { sendOtp } from '../Utils/sendOtp.js'
 import { sendResetLink } from '../Utils/sendResetLink.js'
+import { config } from '../config/env.js'
 
 /**
  * @desc    Register a new user

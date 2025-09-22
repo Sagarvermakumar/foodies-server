@@ -24,24 +24,29 @@ const allowedOrigins = [
 app.options("*", cors());  
 
 
-// app.use((req, res, next) => {
-//   const origin = req.headers.origin;
-//   if (origin && allowedOrigins.includes(origin)) {
-//     res.header("Access-Control-Allow-Origin", origin);
-//   }
-//   res.header("Access-Control-Allow-Credentials", "true");
-//   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-//   if (req.method === "OPTIONS") {
-//     return res.sendStatus(200);   // <-- this fixes the preflight issue
-//   }
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin); // exact origin
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  } else {
+    // If origin is missing or not allowed, do not send *
+    console.warn('Blocked or missing origin:', origin);
+  }
 
-//   next();
-// });
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // preflight success
+  }
+
+  next();
+});
 
 
-// 2) cors middleware with strict origins
+
+//cors middleware with strict origins
 app.use(
   cors({
     origin: function (origin, callback) {

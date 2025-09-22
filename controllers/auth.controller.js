@@ -248,47 +248,38 @@ export const changePassword = catchAsyncError(async (req, res, next) => {
  * @access  Private
  */
 export const logoutUser = catchAsyncError((req, res) => {
-  const role = req.user?.role || 'CUSTOMER' // fallback
-  const isProduction = process.env.NODE_ENV === 'production'
+  const role = req.user?.role || 'CUSTOMER';
+  const isProduction = process.env.NODE_ENV === 'production';
 
   const roleCookieMap = {
-    SUPER_ADMIN: {
-      name: 'super_admin_token',
-      domain: extractDomain(config.ADMIN_URL),
-    },
+    SUPER_ADMIN: { name: 'super_admin_token', domain: extractDomain(config.ADMIN_URL) },
     MANAGER: { name: 'manager_token', domain: extractDomain(config.ADMIN_URL) },
     STAFF: { name: 'staff_token', domain: extractDomain(config.ADMIN_URL) },
-    DELIVERY: {
-      name: 'delivery_token',
-      domain: extractDomain(config.ADMIN_URL),
-    },
-    CUSTOMER: {
-      name: 'customer_token',
-      domain: extractDomain(config.CLIENT_URL),
-    },
-  }
+    DELIVERY: { name: 'delivery_token', domain: extractDomain(config.ADMIN_URL) },
+    CUSTOMER: { name: 'customer_token', domain: extractDomain(config.CLIENT_URL) },
+  };
 
-  // get cookie name + domain for this role
   const { name: cookieName, domain } = roleCookieMap[role] || {
     name: 'user_token',
-    domain: '.myapp.com',
-  }
+    domain: undefined, 
+  };
 
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'None' : 'Lax',
-    expires: new Date(0), // immediately expire
-  }
+    sameSite: 'None', 
+    expires: new Date(0), 
+  };
 
-  // if (isProduction) cookieOptions.domain = domain
-  console.log({ isProduction, cookieOptions })
+  // Only set domain if it was used when creating cookie
+  if (isProduction && domain) cookieOptions.domain = domain;
 
-  return res.status(200).cookie(cookieName, '', cookieOptions).json({
-    success: true,
-    message: `logged out successfully`,
-  })
-})
+  return res
+    .status(200)
+    .cookie(cookieName, '', cookieOptions)
+    .json({ success: true, message: 'Logged out successfully' });
+});
+
 
 /**
  * @desc    Get profile details of the logged-in user

@@ -15,24 +15,31 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://zayka-nu.vercel.app/",
-  "https://zayka-admin-kappa.vercel.app/"
+  "https://zayka-nu.vercel.app",
+  "https://zayka-admin-kappa.vercel.app"
 ];
 
 
-// 1) Fallback header setter (handles cases where origin is undefined)
+// Handle preflight requests globally
+app.options("*", cors());  
+
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) {
+  if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
-  } else {
-    res.header("Access-Control-Allow-Origin", "*"); // fallback for curl/postman
   }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);   // <-- this fixes the preflight issue
+  }
+
   next();
 });
+
 
 // 2) cors middleware with strict origins
 app.use(
@@ -51,6 +58,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"], // no need to include ACA-C here
+    optionsSuccessStatus: 200
   })
 );
 

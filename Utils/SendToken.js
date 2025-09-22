@@ -25,7 +25,7 @@ export const sendToken = (res, user, message, statusCode = 200) => {
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    sameSite: isProduction ? 'None' : 'Lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 

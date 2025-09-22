@@ -272,10 +272,6 @@ export const logoutUser = catchAsyncError((req, res) => {
     expires: new Date(0), 
   };
 
-  // Only set domain if it was used when creating cookie
-  if (isProduction && domain) cookieOptions.domain = domain;
-  if (isProduction && domain) cookieOptions.path = '/';
-
   return res
     .status(200)
     .cookie(cookieName, '', cookieOptions)

@@ -63,15 +63,11 @@ export const createUser = catchAsyncError(async (req, res, next) => {
  * @access  Public
  */
 export const loginUser = catchAsyncError(async (req, res, next) => {
-  const { emailOrPhone, password } = req.body
+  const { emailOrPhone, password, role = "CUSTOMER" } = req.body
 
-  console.log(emailOrPhone, password)
-
-  if (!emailOrPhone || !password) {
-    return next(new ErrorHandler('Please provide email/phone and password', 400))
-  }
 
   const user = await User.findOne({
+    role,
     $or: [{ email: emailOrPhone.toLowerCase() }, { phone: emailOrPhone }],
   }).select('+password')
   if (!user) return next(new ErrorHandler('Invalid credentials', 404))

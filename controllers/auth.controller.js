@@ -6,10 +6,8 @@ import OTP from '../Models/OTP.model.js'
 import ResetToken from '../Models/PasswordToken.model.js'
 import User from '../Models/User.model.js'
 import { sendToken } from '../Utils/SendToken.js'
-import { extractDomain } from '../Utils/extractDomain.js'
 import { sendOtp } from '../Utils/sendOtp.js'
 import { sendResetLink } from '../Utils/sendResetLink.js'
-import { config } from '../config/env.js'
 
 /**
  * @desc    Register a new user
@@ -248,35 +246,44 @@ export const changePassword = catchAsyncError(async (req, res, next) => {
  * @route   GET /api/v1/user/logout
  * @access  Private
  */
+
 export const logoutUser = catchAsyncError((req, res) => {
-  const role = req.user?.role || 'CUSTOMER';
+  const role = req.user?.role;
+
   const isProduction = process.env.NODE_ENV === 'production';
 
   const roleCookieMap = {
-    SUPER_ADMIN: { name: 'super_admin_token', domain: extractDomain(config.ADMIN_URL) },
-    MANAGER: { name: 'manager_token', domain: extractDomain(config.ADMIN_URL) },
-    STAFF: { name: 'staff_token', domain: extractDomain(config.ADMIN_URL) },
-    DELIVERY: { name: 'delivery_token', domain: extractDomain(config.ADMIN_URL) },
-    CUSTOMER: { name: 'customer_token', domain: extractDomain(config.CLIENT_URL) },
+    SUPER_ADMIN: 'super_admin_token',
+    MANAGER: 'manager_token',
+    STAFF: 'staff_token',
+    DELIVERY: 'delivery_token',
+    CUSTOMER: 'customer_token',
   };
 
-  const { name: cookieName, domain } = roleCookieMap[role] || {
-    name: 'user_token',
-    domain: undefined, 
-  };
+  const cookieName = roleCookieMap[role] || 'user_token';
 
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'None', 
-    expires: new Date(0), 
+    sameSite: 'None',
+    expires: new Date(0), // expire immediately
   };
 
-  return res
-    .status(200)
-    .cookie(cookieName, '', cookieOptions)
-    .json({ success: true, message: 'Logged out successfully' });
+  // Clear role-specific token
+  res.cookie(cookieName, '', cookieOptions);
+
+  // Clear last_active_role cookie as well
+  res.cookie('last_active_role', '', {
+    ...cookieOptions,
+    httpOnly: false, // same as set before
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 });
+
 
 
 /**

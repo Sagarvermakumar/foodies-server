@@ -1,44 +1,41 @@
 
 import { config } from "../config/env.js";
-import { extractDomain } from "./extractDomain.js";
-
 
 export const sendToken = (res, user, message, statusCode = 200) => {
   const token = user.getJWTToken();
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = config.NODE_ENV === 'production';
 
   const roleCookieMap = {
-    SUPER_ADMIN: { name: "super_admin_token", domain: extractDomain(config.ADMIN_URL) },
-    MANAGER: { name: "manager_token", domain: extractDomain(config.ADMIN_URL) },
-    STAFF: { name: "staff_token", domain: extractDomain(config.ADMIN_URL) },
-    DELIVERY: { name: "delivery_token", domain: extractDomain(config.ADMIN_URL) },
-    CUSTOMER: { name: "customer_token", domain: extractDomain(config.CLIENT_URL) },
+    SUPER_ADMIN: { name: "super_admin_token" },
+    MANAGER: { name: "manager_token" },
+    STAFF: { name: "staff_token" },
+    DELIVERY: { name: "delivery_token" },
+    CUSTOMER: { name: "customer_token" },
   };
 
-  const { name, domain } = roleCookieMap[user.role] || {
-    name: "user_token",
-    domain: ".myapp.com",
-  };
-
+  const { name } = roleCookieMap[user.role] || { name: "user_token" };
 
   const cookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'None' : 'Lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: 'None',      // cross-site
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 
+  // Role-specific token
+  res.cookie(name, token, cookieOptions);
 
+  // last_active_role cookie
+  res.cookie("last_active_role", user.role, {
+    ...cookieOptions,
+    httpOnly: false, // client can read for UI / query param
+  });
 
-
-  console.log({isProduction, cookieOptions, token})
-
-  res
-    .status(statusCode)
-    .cookie(name, token, cookieOptions)
-    .json({
-      success: true,
-      message,
-      user,
-    });
+  // send response
+  res.status(statusCode).json({
+    success: true,
+    message,
+    user,
+  });
 };
+

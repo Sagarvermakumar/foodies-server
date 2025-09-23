@@ -6,7 +6,8 @@ import ErrorHandler from "./Error.js";
 
 /**
  * @desc    Middleware to check if the user is authenticated
- * @use     Checks role-based cookies and verifies JWT. Attaches user to req.user
+ * @use     Checks role-based cookies (using last_active_role) and verifies JWT.
+ *          Attaches user to req.user
  */
 export const isAuthenticate = catchAsyncError(async (req, res, next) => {
   const roleCookieMap = {
@@ -17,42 +18,40 @@ export const isAuthenticate = catchAsyncError(async (req, res, next) => {
     CUSTOMER: "customer_token",
   };
 
-  // Get token from whichever role cookie exists
-  let token, role;
-  for (const [roleKey, cookieName] of Object.entries(roleCookieMap)) {
-    if (req.cookies[cookieName]) {
-      token = req.cookies[cookieName];
-      role = roleKey;
-      break;
-    }
+  // Prefer query param if provided (for UI role selection)
+  let role = req.query.role;
+
+  // Fallback to last_active_role cookie
+  if (!role && req.cookies.last_active_role) {
+    role = req.cookies.last_active_role;
   }
 
-  if (!token) {
-    return next(new ErrorHandler("You need to login first...", 401));
+  if (!role || !roleCookieMap[role]) {
+    return next(new ErrorHandler("Role required or invalid", 400));
   }
 
-  //Verify JWT
+  // Get token for this role
+  const token = req.cookies[roleCookieMap[role]];
+  if (!token) return next(new ErrorHandler("Token missing for this role", 401));
+
+  // Verify token
   let decoded;
   try {
     decoded = jwt.verify(token, config.JWT_SECRET);
   } catch (err) {
-    return next(
-      new ErrorHandler("Invalid or expired token. Please login again.", 401)
-    );
+    return next(new ErrorHandler("Invalid or expired token", 401));
   }
 
-  // Find user
+  // Check role consistency
+  if (decoded.role !== role) {
+    return next(new ErrorHandler("Role mismatch. Please select correct role.", 401));
+  }
+
+  // Fetch user
   const user = await User.findById(decoded.id);
   if (!user) return next(new ErrorHandler("User not found", 404));
 
-  // Ensure role from cookie matches user role
-  if (user.role !== role) {
-    return next(
-      new ErrorHandler("Role mismatch. Please login again.", 401)
-    );
-  }
-
+  // Attach user to request
   req.user = user;
   next();
 });
-

@@ -76,7 +76,7 @@ router.post("/reset-password",   validateRequest, resetPassword );
  * @desc    Log out the current user
  * @access  Private
  */
-router.post("/logout", logoutUser);
+router.post("/logout", isAuthenticate, logoutUser);
 
 
 /**

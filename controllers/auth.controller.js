@@ -65,6 +65,12 @@ export const createUser = catchAsyncError(async (req, res, next) => {
 export const loginUser = catchAsyncError(async (req, res, next) => {
   const { emailOrPhone, password } = req.body
 
+  console.log(emailOrPhone, password)
+
+  if (!emailOrPhone || !password) {
+    return next(new ErrorHandler('Please provide email/phone and password', 400))
+  }
+
   const user = await User.findOne({
     $or: [{ email: emailOrPhone.toLowerCase() }, { phone: emailOrPhone }],
   }).select('+password')

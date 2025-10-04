@@ -4,12 +4,12 @@ import { config } from "./env.js";
 const connectDB = async () => {
   try {
 
-    const MONGO_URI = config.MONGO_URI_LOCAL
+    const MONGO_URI = config.MONGO_URI_CLOUD
   
 
     const connection = await mongoose.connect(MONGO_URI,{
-      // dbName:"food-delivery-system"
-      dbName:"Yumz"
+      dbName:"food-delivery-system"
+      // dbName:"Yumz"
     });
     console.log(`Database connected to ${connection.connection.host}`);
   } catch (error) {

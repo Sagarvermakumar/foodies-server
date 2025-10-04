@@ -84,35 +84,76 @@ export const createItem = catchAsyncError(async (req, res, next) => {
  */
 
 export const getAllItems = catchAsyncError(async (req, res, next) => {
-  let { query, page, limit } = req.query
+  let { query, page, limit, category, outlet, isVeg, minPrice, maxPrice, isAvailable, discount, minRating, sortBy, order } = req.query;
+  console.log({ query, page, limit, category, outlet, isVeg, minPrice, maxPrice, isAvailable, discount, minRating, sortBy, order})
 
-  page = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1
-  limit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10
+  page = parseInt(page, 10) > 0 ? parseInt(page, 10) : 1;
+  limit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 10;
+  const skip = (page - 1) * limit;
 
-  const filters = {}
+  const filters = {};
 
+  // Text search on name or description
   if (query && query.trim() !== '') {
-    const regex = new RegExp(query, 'i')
-
-    filters.name = regex
+    const regex = new RegExp(query, 'i');
+    filters.$or = [
+      { name: regex },
+      { description: regex },
+    ];
   }
 
-  // Pagination calculation
-  const skip = (page - 1) * limit
-  // Query with filters, skip, and limit
+  // Filter by category
+  if (category) filters.category = category;
+
+  // Filter by outlet
+  if (outlet) filters.outlet = outlet;
+
+  // Filter by vegetarian
+  if (isVeg !== undefined) filters.isVeg = isVeg === 'true';
+
+  // Filter by price range
+  if (minPrice || maxPrice) {
+    filters.price = {};
+    if (minPrice) filters.price.$gte = parseFloat(minPrice);
+    if (maxPrice) filters.price.$lte = parseFloat(maxPrice);
+  }
+
+  // Filter by availability
+  if (isAvailable !== undefined) filters.isAvailable = isAvailable === 'true';
+
+  // Filter by discount
+  if (discount) filters.discount = { $gte: parseFloat(discount) };
+
+  // Filter by rating
+  if (minRating) filters.ratingAvg = { $gte: parseFloat(minRating) };
+
+  // Sorting
+  let sort = {};
+  if (sortBy) {
+    const sortOrder = order === 'desc' ? -1 : 1;
+    const allowedSort = ['price', 'ratingAvg', 'createdAt', 'name'];
+    if (allowedSort.includes(sortBy)) {
+      sort[sortBy] = sortOrder;
+    }
+  } else {
+    sort = { createdAt: -1 }; // default newest first
+  }
+
+  // Query database
   const items = await Item.find(filters)
     .skip(skip)
     .limit(limit)
+    .sort(sort)
     .populate('category', 'name')
     .populate('outlet', 'name')
-    .populate('createdBy', 'name role')
+    .populate('createdBy', 'name role');
 
-  const total = await Item.countDocuments(filters)
+  const total = await Item.countDocuments(filters);
 
   if (!items || items.length === 0) {
     return next(
       new ErrorHandler('No menu items found matching the criteria', 404)
-    )
+    );
   }
 
   res.status(200).json({
@@ -127,8 +168,9 @@ export const getAllItems = catchAsyncError(async (req, res, next) => {
       hasNextPage: page * limit < total,
       hasPrevPage: page > 1,
     },
-  })
-})
+  });
+});
+
 
 // @desc    Get single item by slug
 // @route   GET /items/:slug

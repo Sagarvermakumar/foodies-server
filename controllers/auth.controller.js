@@ -63,23 +63,36 @@ export const createUser = catchAsyncError(async (req, res, next) => {
  * @access  Public
  */
 export const loginUser = catchAsyncError(async (req, res, next) => {
-  const { emailOrPhone, password, role = "CUSTOMER" } = req.body
+  const { emailOrPhone, password, role = "CUSTOMER" } = req.body;
+
+  const query = {
+      role: { $regex: new RegExp(`^${role}$`, "i") },
+    $or: [
+      { email: emailOrPhone.toLowerCase() },
+      { phone: String(emailOrPhone) },
+    ],
+  };
+
+  const user = await User.findOne(query).select('+password');
+console.log("Request Body:", req.body);
+console.log("Found user:", user?.email, user?.phone, user?.role);
+const allUsers = await User.find({}, "email role");
+console.log("All users in DB:", allUsers);
 
 
-  const user = await User.findOne({
-    role,
-    $or: [{ email: emailOrPhone.toLowerCase() }, { phone: emailOrPhone }],
-  }).select('+password')
-  if (!user) return next(new ErrorHandler('Invalid credentials', 404))
-
-  const isMatchPassword = await user.matchPassword(password)
-
-  if (!isMatchPassword) {
-    return next(new ErrorHandler('Invalid credentials', 404))
+  if (!user) {
+    console.log("❌ User not found with:", query);
+    return next(new ErrorHandler('Invalid credentials (email or phone)', 400));
   }
 
-  sendToken(res, user, 'Login Successful', 200)
-})
+  const isMatchPassword = await user.matchPassword(password);
+  if (!isMatchPassword) {
+    return next(new ErrorHandler('Invalid credentials (password)', 400));
+  }
+
+  sendToken(res, user, 'Login Successful', 200);
+});
+
 
 /**
  * @route POST /api/v1/auth/email/otp-login

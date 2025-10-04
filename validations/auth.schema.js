@@ -17,7 +17,7 @@ export const registerValidator = [
 export const loginValidator = [
   body('emailOrPhone').notEmpty().withMessage('Valid email/phone is required'),
   body('password').notEmpty().withMessage('Password is required'),
-  body('role')
+  body('role').default("CUSTOMER")
     .isIn(['SUPER_ADMIN', 'MANAGER', 'STAFF', 'DELIVERY', 'CUSTOMER'])
     .withMessage('Invalid role'),
 ]

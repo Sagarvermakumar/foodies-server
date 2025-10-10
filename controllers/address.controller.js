@@ -44,6 +44,7 @@ export const createAddress = async (req, res) => {
     state = '',
   } = req.body
 
+  console.log(req.body)
 
   // 1. Check pincode API
 

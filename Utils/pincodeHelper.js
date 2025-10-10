@@ -14,14 +14,18 @@ export const getAddressFromPincode = async (pinCode) => {
     ) {
       const postOffice = response.data[0].PostOffice[0];
       return {
-        city: postOffice.Block || postOffice.Taluk || "", // Local City/Taluk
-        district: postOffice.District || "",
-        state: postOffice.State || "",
-        country: "India",
-        pinCode,
+        district: postOffice?.District,
+        state: postOffice.State ,
+        country: postOffice.Country,
+        pinCode:postOffice.Pincode,
       };
     } else {
-      return null;
+      return {
+        district:"",
+        state:  "",
+        country:  "",
+        pinCode:pinCode,
+      };;
     }
   } catch (error) {
     console.error("Error fetching pincode details:", error.message);
